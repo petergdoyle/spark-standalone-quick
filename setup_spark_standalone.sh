@@ -8,24 +8,25 @@ fi
 SPARK_MASTER_IP=192.168.1.81
 SPARK_SLAVE01_IP=192.168.1.81
 SPARK_SLAVE02_IP=192.168.1.82
+local_ip_address=$(ifconfig |egrep 'inet\W' |grep -v '127.0.0.1' | awk '{print $2}')
 
 # all nodes
-if [ ! -d /spark/data ]; then
-  mkdir -pv /spark/data
-  chmod ugo+w /spark/data/
-fi
+# if [ ! -d /spark/data ]; then
+  mkdir -pv /tmp/spark/data
+  chmod ugo+w /tmp/spark/data/
+# fi
 
 # all nodes
-if [ ! -d /spark/worker ]; then
-  mkdir -pv /spark/work
-  chmod ugo+w /spark/work/
-fi
+# if [ ! -d /spark/worker ]; then
+  mkdir -pv /tmp/sp/work
+  chmod ugo+w /tmp/spark/work/
+# fi
 
 # all nodes
-if [ ! -d /spark/checkpoint ]; then
-  mkdir -pv /spark/checkpoint
-  chmod ugo+w /spark/checkpoint/
-fi
+# if [ ! -d /spark/checkpoint ]; then
+  mkdir -pv /tmp/sp/checkpoint
+  chmod ugo+w /tmp/spark/checkpoint/
+# fi
 
 # all nodes
 cp -fv $SPARK_HOME/conf/spark-env.sh.template $SPARK_HOME/conf/spark-env.sh
@@ -55,4 +56,4 @@ cat <<EOF >$SPARK_HOME/conf/spark-defaults.conf
 spark.master spark://192.168.1.81:7077
 EOF
 
-scp $SPARK_HOME/conf/spark-defaults.conf $SPARK_SLAVE02_IP:$SPARK_SLAVE02_IP
+scp $SPARK_HOME/conf/spark-defaults.conf $SPARK_HOME/conf/spark-env.sh $SPARK_HOME/conf/slaves
