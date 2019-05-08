@@ -12,16 +12,19 @@ SPARK_SLAVE02_IP=192.168.1.82
 # all nodes
 if [ ! -d /spark/data ]; then
   mkdir -pv /spark/data
+  chmod ugo+w /spark/data/
 fi
 
 # all nodes
 if [ ! -d /spark/worker ]; then
   mkdir -pv /spark/work
+  chmod ugo+w /spark/work/
 fi
 
 # all nodes
 if [ ! -d /spark/checkpoint ]; then
   mkdir -pv /spark/checkpoint
+  chmod ugo+w /spark/checkpoint/
 fi
 
 # all nodes
