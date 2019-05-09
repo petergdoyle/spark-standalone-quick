@@ -1,5 +1,60 @@
 #!/usr/bin/env bash
 
+function define_cluster_nodes() {
+  rm -fvr spark-cluster.info
+  master_node_name='spark-master'
+  master_node_ip=$(ifconfig |egrep 'inet ([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})'| awk '{print $2}'| grep -v '127.0.0.1'|  head -n 1)
+  read -e -p "[spark-cluster-quick] Enter the hostname for the master node: " -i "$master_node_name" master_node_name
+  master_node_ip=$(ping -c 1 $master_node_name |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
+  while [ "$master_node_ip" == "" ]; do
+    read -e -p "[spark-cluster-quick] Cannot resolve master node specified as $master_node_name. Enter the ip for the master node: " -i "$master_node_ip" master_node_ip
+    master_node_ip=$(ping -c 1 $master_node_ip |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
+    if [ "$master_node_ip" != "" ]; then
+      read -n 1 -s -r -p "'$master_node_ip $master_node_name' will be added to /etc/hosts. Press any key to continue..."
+      # echo "$master_node_ip $master_node_name" >> /etc/hosts
+      echo MASTER_NODE_NAME=$master_node_name >> spark-cluster.info
+      echo MASTER_NODE_IP=$master_node_ip >> spark-cluster.info
+      echo -e ""
+    fi
+  done
+  worker_id=1
+  worker_node_name="spark-worker-$worker_id"
+  worker_node_ip="$master_node_ip"
+  add_more=true
+  while $add_more; do
+    read -e -p "[spark-cluster-quick] Enter the hostname for worker node #$worker_id: " -i "$worker_node_name" worker_node_name
+    worker_node_ip=$(ping -c 1 $worker_node_name |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
+    while [ "$worker_node_ip" == "" ]; do
+      read -e -p "[spark-cluster-quick] Cannot resolve worker node specified as $worker_node_name. Enter the ip for worker node #$worker_id: " -i "$worker_node_ip" worker_node_ip
+      worker_node_ip=$(ping -c 1 $worker_node_ip |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
+      if [ "$worker_node_ip" != "" ]; then
+        read -n 1 -s -r -p "'$worker_node_ip $worker_node_name' will be added to /etc/hosts. Press any key to continue"
+        # echo "$worker_node_ip $worker_node_name" >> /etc/hosts
+        echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
+        echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
+        echo ""
+      fi
+    done
+    continue="y"
+    read -e -p "[spark-cluster-quick] Add another worker node (y/n)?: " -i "$continue" continue
+    if [ "$continue" != "y" ]; then
+      add_more=false
+    else
+      add_more=true
+      worker_id=$[$worker_id +1]
+      worker_node_name="spark-worker-$worker_id"
+    fi
+  done
+  cat spark-cluster.info
+}
+
+function spark_stop_master() {
+    $SPARK_HOME/sbin/stop-master.sh
+}
+
+function spark_stop_slaves() {
+    $SPARK_HOME/sbin/stop-slaves.sh
+}
 
 function spark_check_status() {
   ps aux |egrep 'Worker|Master' |grep -v grep

@@ -15,6 +15,7 @@ fi
 eval 'scala -version' > /dev/null 2>&1
 if [ $? -eq 127 ]; then
   echo -e "Scala is not installed. Install Scala"
+  exit 1
 fi
 
 if [ -z "$SCALA_HOME" ]; then

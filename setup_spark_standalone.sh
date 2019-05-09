@@ -18,7 +18,7 @@ fi
 
 if [ -z "$SPARK_HOME" ]; then
   echo "ENV variable SPARK_HOME is not set. SPARK_HOME must be set"
-  return 1
+  exit 1
 fi
 
 SPARK_MASTER_IP=192.168.1.81
@@ -31,19 +31,19 @@ local_ip_address=$(ifconfig |egrep 'inet\W' |grep -v '127.0.0.1' | awk '{print $
 # all nodes
 if [ ! -d /tmp/spark/data ]; then
   mkdir -pv /tmp/spark/data
-  chmod ugo+w /tmp/spark/data/
+  chmod ugo+w /tmp/spark/data
 fi
 
 # all nodes
-if [ ! -d /tmp/spark/worker ]; then
-  mkdir -pv /tmp/sp/work
-  chmod ugo+w /tmp/spark/work/
+if [ ! -d /tmp/spark/work ]; then
+  mkdir -pv /tmp/spark/work
+  chmod ugo+w /tmp/spark/work
 fi
 
 # all nodes
 if [ ! -d /tmp/spark/checkpoint ]; then
   mkdir -pv /tmp/sp/checkpoint
-  chmod ugo+w /tmp/spark/checkpoint/
+  chmod ugo+w /tmp/spark/checkpoint
 fi
 
 # all nodes
