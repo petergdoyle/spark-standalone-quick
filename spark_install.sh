@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+. ./spark_common.sh
 
 java -version > /dev/null 2>&1
 if [ $? -eq 127 ]; then
@@ -47,6 +48,8 @@ export SPARK_HOME=$SPARK_HOME
 export PATH=\$PATH:\$SPARK_HOME/bin
 export PATH=\$PATH:\$SPARK_HOME/sbin
 EOF
+
+  open_firewall_ports
 
 else
   echo -e "$SPARK_VERSION already appears to be installed. skipping."
