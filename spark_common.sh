@@ -2,7 +2,7 @@
 
 function define_cluster_nodes() {
   rm -fvr spark-cluster.info
-  touch spark-cluster.infoß
+  touch spark-cluster.info
   master_node_name='spark-master'
   master_node_ip=$(ifconfig |egrep 'inet ([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})'| awk '{print $2}'| grep -v '127.0.0.1'|  head -n 1)
   read -e -p "[spark-cluster-quick] Enter the hostname for the master node: " -i "$master_node_name" master_node_name
