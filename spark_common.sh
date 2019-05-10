@@ -33,9 +33,9 @@ function define_cluster_nodes() {
         echo "$worker_node_ip $worker_node_name" >> /etc/hosts
         echo ""
       fi
-      echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
-      echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
     done
+    echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
+    echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
     continue="y"
     read -e -p "[spark-cluster-quick] Add another worker node (y/n)?: " -i "$continue" continue
     if [ "$continue" != "y" ]; then
