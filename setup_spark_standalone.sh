@@ -120,8 +120,6 @@ fi
 EOF
 
 # copy configs to all nodes in the cluster
-nodes=$(cat conf/spark-cluster.info |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| sort -u)
 for each in $nodes; do
-  cmd="scp -v conf/* $each:/usr/spark/default/conf/"
-  eval "$cmd"
+  scp -v conf/* $each:/usr/spark/default/conf/
 done
