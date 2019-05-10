@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
 
 function define_cluster_nodes() {
-  rm -fvr spark-cluster.info
-  touch spark-cluster.info
+  if [ -d conf/ ]; then
+    rm -fvr conf/*
+  else
+    mkdir -pv conf/
+  fi
+  touch conf/spark-cluster.info
   master_node_name='spark-master'
   master_node_ip=$(ifconfig |egrep 'inet ([0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3})'| awk '{print $2}'| grep -v '127.0.0.1'|  head -n 1)
   read -e -p "[spark-cluster-quick] Enter the hostname for the master node: " -i "$master_node_name" master_node_name
@@ -16,8 +20,8 @@ function define_cluster_nodes() {
       echo -e ""
     fi
   done
-  echo -e MASTER_NODE_NAME=$master_node_name >> spark-cluster.info
-  echo -e MASTER_NODE_IP=$master_node_ip >> spark-cluster.info
+  echo -e MASTER_NODE_NAME=$master_node_name >> conf/spark-cluster.info
+  echo -e MASTER_NODE_IP=$master_node_ip >> conf/spark-cluster.info
   worker_id=1
   worker_node_name="spark-worker-$worker_id"
   worker_node_ip="$master_node_ip"
@@ -34,8 +38,8 @@ function define_cluster_nodes() {
         echo ""
       fi
     done
-    echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
-    echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
+    echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> conf/spark-cluster.info
+    echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> conf/spark-cluster.info
     continue="y"
     read -e -p "[spark-cluster-quick] Add another worker node (y/n)?: " -i "$continue" continue
     if [ "$continue" != "y" ]; then
@@ -46,7 +50,15 @@ function define_cluster_nodes() {
       worker_node_name="spark-worker-$worker_id"
     fi
   done
-  cat spark-cluster.info
+  cat conf/spark-cluster.info
+}
+
+function spark_start_master() {
+    $SPARK_HOME/sbin/start-master.sh
+}
+
+function spark_start_slaves() {
+    $SPARK_HOME/sbin/start-slaves.sh
 }
 
 function spark_stop_master() {
@@ -57,11 +69,33 @@ function spark_stop_slaves() {
     $SPARK_HOME/sbin/stop-slaves.sh
 }
 
-function spark_check_status() {
+function spark_check_status_local() {
   ps aux |egrep 'Worker|Master' |grep -v grep
 }
 
-function spark_cleanup_runtime() {
+function local_ip_bindings() {
+  local_ips=$(ifconfig |egrep 'inet\W' |grep -v '127.0.0.1' | awk '{print $2}')
+  echo $local_ips
+}
+
+function spark_check_status_cluster() {
+  if [ -f conf/spark-cluster.info ]; then
+    masters=$(cat conf/spark-cluster.info | grep MASTER_NODE |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}')
+    for each in $masters; do
+      echo -e "master: $each\n"
+      ssh $each "ps aux |egrep 'Master'| grep -v grep"
+    done
+    workers=$(cat conf/spark-cluster.info | grep WORKER_NODE |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}')
+    for each in $workers; do
+      echo -e "worker: $each\n"
+      ssh $each "ps aux |egrep 'Worker'| grep -v grep"
+    done
+  else
+    echo -e "[error] Cannot find conf/spark-cluster.info file to read."
+  fi
+}
+
+function spark_cleanup_runtime_local() {
 
   cmd="rm -frv $SPARK_HOME/logs/*"
   read -n 1 -s -r -p "About to delete contents under $SPARK_HOME/logs/ ! Press any key to continue"
