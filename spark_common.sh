@@ -12,12 +12,12 @@ function define_cluster_nodes() {
     master_node_ip=$(ping -c 1 $master_node_ip |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
     if [ "$master_node_ip" != "" ]; then
       read -n 1 -s -r -p "'$master_node_ip $master_node_name' will be added to /etc/hosts. Press any key to continue..."
-      # echo "$master_node_ip $master_node_name" >> /etc/hosts
-      echo MASTER_NODE_NAME=$master_node_name >> spark-cluster.info
-      echo MASTER_NODE_IP=$master_node_ip >> spark-cluster.info
+      echo "$master_node_ip $master_node_name" >> /etc/hosts
       echo -e ""
     fi
   done
+  echo -e MASTER_NODE_NAME=$master_node_name >> spark-cluster.info
+  echo -e MASTER_NODE_IP=$master_node_ip >> spark-cluster.info
   worker_id=1
   worker_node_name="spark-worker-$worker_id"
   worker_node_ip="$master_node_ip"
@@ -30,11 +30,11 @@ function define_cluster_nodes() {
       worker_node_ip=$(ping -c 1 $worker_node_ip |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| head -n 1)
       if [ "$worker_node_ip" != "" ]; then
         read -n 1 -s -r -p "'$worker_node_ip $worker_node_name' will be added to /etc/hosts. Press any key to continue"
-        # echo "$worker_node_ip $worker_node_name" >> /etc/hosts
-        echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
-        echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
+        echo "$worker_node_ip $worker_node_name" >> /etc/hosts
         echo ""
       fi
+      echo WORKER_NODE_$worker_id"_NAME="$worker_node_name >> spark-cluster.info
+      echo WORKER_NODE_$worker_id"_IP="$worker_node_ip >> spark-cluster.info
     done
     continue="y"
     read -e -p "[spark-cluster-quick] Add another worker node (y/n)?: " -i "$continue" continue
