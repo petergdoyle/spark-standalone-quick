@@ -23,7 +23,7 @@ if [ -z "$SPARK_HOME" ]; then
 fi
 
 if [ ! -d $SPARK_HOME/ ] || [ find $SPARK_HOME/ -type f > /dev/null 2>&1 ]; then
-  echo "$SPARK_HOME doesn't exist or is empty."
+  echo "$SPARK_HOME doesn't exist or is empty. Run spark_install.sh and make sure you log out and back in to set all ENV variables"
   exit 1
 fi
 
@@ -52,6 +52,7 @@ rm -frv conf/*
 # SPARK_DAEMON_CLASSPATH	Classpath for the Spark master and worker daemons themselves (default: none).
 # SPARK_PUBLIC_DNS	The public DNS name of the Spark master and workers (default: none).
 
+spark_dirs=()
 spark_data_dir="/tmp/spark/data"
 read -e -p "Specify spark-cluster data directory: " -i "$spark_data_dir" spark_data_dir
 spark_work_dir="/tmp/spark/work"
@@ -66,12 +67,28 @@ read -e -p "Specify Memory to allocate to the Spark master and worker daemons th
 spark_worker_memory="2g"
 read -e -p "Specify Total amount of memory to allow Spark applications to use on each node: " -i "$spark_worker_memory" spark_worker_memory
 
+spark_master_ports=()
 spark_master_port="7077"
 read -e -p "Specify Port for the master: " -i "$spark_master_port" spark_master_port
+spark_master_ports+=($spark_master_port)
 spark_master_webui_port="9081"
 read -e -p "Specify Port for the master web UI: " -i "$spark_master_webui_port" spark_master_webui_port
+spark_master_ports+=($spark_master_webui_port)
+# echo ${spark_master_ports[@]}
+
+spark_worker_ports=()
 spark_worker_webui_port="9082"
 read -e -p "Specify Port for the worker web UI: " -i "$spark_worker_webui_port" spark_worker_webui_port
+spark_worker_ports+=($spark_worker_webui_port)
+# for each spark_worker ... add additional ports by incrementing the spark_worker_webui_port x the number of workers (less the one already added as the base)
+max=$(( spark_worker_instances - 1 ))
+port=$spark_worker_webui_port
+for i in `eval echo {1..$max}`; do
+  (( port = port + 1))
+  spark_worker_ports+=($port)
+done
+# echo ${spark_worker_ports[@]}
+
 
 # all nodes
 cp -fv $SPARK_HOME/conf/spark-env.sh.template conf/spark-env.sh
@@ -121,5 +138,30 @@ EOF
 
 # copy configs to all nodes in the cluster
 for each in $nodes; do
-  scp -v conf/* $each:/usr/spark/default/conf/
+  spark_installed=$(ssh $each 'if [ -d $SPARK_HOME ]; then echo "y"; fi')
+  if [ "$spark_installed" != "y"]; then
+    echo -e "Spark doesn't seem to be installed on $each at $SPARK_HOME."
+  else
+    spark_conf_dir=$SPARK_HOME/conf
+    scp -v conf/* $each:$spark_conf_dir
+    if [ $? -eq 0 ]; then
+      echo -e "Successfully copied configs to $each."
+    else
+      echo -e "Something went wrong trying to copy configs to $each."
+    fi
+  fi
 done
+
+firewall-cmd --version
+if [ $? -ne 0 ]; then
+  echo -e "firewalld doesn't seem to be installed or running, skipping firewall configuration."
+else
+  for node in $nodes; do
+    for port in "${spark_worker_ports[@]}"; do
+      ssh $node "firewall-cmd --zone=public --add-port=$port/tcp" # one ui port for each worker
+    done
+  done
+  for port in "${spark_master_ports[@]}"; do
+    ssh $master_node_name "firewall-cmd --zone=public --add-port=$port/tcp" # master only
+  done
+fi

@@ -23,14 +23,13 @@ if [ -z "$SCALA_HOME" ]; then
   exit 1
 fi
 
-SPARK_VERSION='2.4.1'
-
 # install spark
 eval 'spark-submit --version' > /dev/null 2>&1
 if [ $? -eq 127 ]; then
 
+  spark_version='spark-2.4.1'
   spark_home="/usr/spark/default"
-  download_url="https://archive.apache.org/dist/tmp/spark/$SPARK_VERSION/$SPARK_VERSION-bin-hadoop2.7.tgz"
+  download_url="https://archive.apache.org/dist/spark/$spark_version/$spark_version-bin-hadoop2.7.tgz"
 
   if [ ! -d /usr/spark ]; then
     mkdir -pv /usr/spark
@@ -38,19 +37,37 @@ if [ $? -eq 127 ]; then
 
   echo "downloading $download_url..."
   cmd="curl -O $download_url \
-    && tar -xvf  $SPARK_VERSION-bin-hadoop2.7.tgz -C /usr/spark \
-    && ln -s /usr/spark/$SPARK_VERSION-bin-hadoop2.7 $spark_home \
-    && rm -f $SPARK_VERSION-bin-hadoop2.7.tgz"
+    && tar -xvf  $spark_version-bin-hadoop2.7.tgz -C /usr/spark \
+    && ln -s /usr/spark/$spark_version-bin-hadoop2.7 $spark_home \
+    && rm -f $spark_version-bin-hadoop2.7.tgz"
   eval "$cmd"
 
-  export SPARK_HOME=$spark_home
-  cat <<EOF >/etc/profile.d/spark.sh
-export SPARK_HOME=$SPARK_HOME
-export PATH=\$PATH:\$SPARK_HOME/bin
-export PATH=\$PATH:\$SPARK_HOME/sbin
-EOF
+  spark_checkpoint_dir="/tmp/spark/checkpoint"
+  spark_logs_dir="$spark_home/logs"
+  spark_work_dir="$spark_home/work"
 
-  open_firewall_ports
+  # spark nodes need a checkpoint directory to keep state should a node go down
+  if [ ! -d "$spark_checkpoint_dir" ]; then
+    mkdir -pv "$spark_checkpoint_dir" && chmod ugo+rw "$spark_checkpoint_dir/"
+  fi
+
+  # spark nodes need a logs directory
+  if [ ! -d "$spark_logs_dir" ]; then
+    mkdir -pv "$spark_logs_dir" && chmod ugo+rw "$spark_logs_dir"
+  fi
+
+  # spark workers need a work directory
+  if [ ! -d "$spark_work_dir" ]; then
+    mkdir -pv "$spark_work_dir" && chmod ugo+rw "$spark_work_dir"
+  fi
+
+  cat <<EOF >/etc/profile.d/spark.sh
+export SPARK_HOME=$spark_home
+export PATH=\$PATH:\$SPARK_HOME/bin
+export \$SPARK_CHECKPOINT_DIR=$spark_checkpoint_dir
+export \$SPARK_LOGS_DIR=$spark_logs_dir
+export \$SPARK_WORK_DIR=$spark_work_dir
+EOF
 
 else
   echo -e "$SPARK_VERSION already appears to be installed. skipping."
