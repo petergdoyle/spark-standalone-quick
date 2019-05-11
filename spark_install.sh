@@ -42,25 +42,6 @@ if [ $? -eq 127 ]; then
     && rm -f $spark_version-bin-hadoop2.7.tgz"
   eval "$cmd"
 
-  spark_checkpoint_dir="/tmp/spark/checkpoint"
-  spark_logs_dir="$spark_home/logs"
-  spark_work_dir="$spark_home/work"
-
-  # spark nodes need a checkpoint directory to keep state should a node go down
-  if [ ! -d "$spark_checkpoint_dir" ]; then
-    mkdir -pv "$spark_checkpoint_dir" && chmod ugo+rw "$spark_checkpoint_dir/"
-  fi
-
-  # spark nodes need a logs directory
-  if [ ! -d "$spark_logs_dir" ]; then
-    mkdir -pv "$spark_logs_dir" && chmod ugo+rw "$spark_logs_dir"
-  fi
-
-  # spark workers need a work directory
-  if [ ! -d "$spark_work_dir" ]; then
-    mkdir -pv "$spark_work_dir" && chmod ugo+rw "$spark_work_dir"
-  fi
-
   cat <<EOF >/etc/profile.d/spark.sh
 export SPARK_HOME=$spark_home
 export PATH=\$PATH:\$SPARK_HOME/bin
