@@ -151,7 +151,7 @@ EOF
 
 # copy configs to all nodes in the cluster
 for node in $nodes; do
-  spark_installed=$(ssh $node 'if [ -d $SPARK_HOME ]; then echo "y"; fi')
+  spark_installed=$(ssh $node 'if [ ! -z $SPARK_HOME ] && [ -d $SPARK_HOME/conf ]; then echo "y"; fi')
   if [ "$spark_installed" != "y"]; then
     echo -e "Spark doesn't seem to be installed on $node at $SPARK_HOME."
   else
