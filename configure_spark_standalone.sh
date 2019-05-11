@@ -166,16 +166,17 @@ for node in $nodes; do
   fi
 done
 
+read -n 1 -s -r -p "Warning about to change firewwall rules on cluster machines. Press any key to continue..."
 firewall-cmd --version
 if [ $? -ne 0 ]; then
   echo -e "firewalld doesn't seem to be installed or running, skipping firewall configuration."
 else
   for node in $nodes; do
     for port in "${spark_worker_ports[@]}"; do
-      ssh $node "firewall-cmd --zone=public --add-port=$port/tcp" # one ui port for each worker
+      ssh $node "firewall-cmd --zone=public --permanent --add-port=$port/tcp" # one ui port for each worker
     done
   done
   for port in "${spark_master_ports[@]}"; do
-    ssh $master_node_name "firewall-cmd --zone=public --add-port=$port/tcp" # master only
+    ssh $master_node_name "firewall-cmd --zone=public --permanent --add-port=$port/tcp" # master only
   done
 fi
