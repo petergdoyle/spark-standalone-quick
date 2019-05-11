@@ -45,9 +45,6 @@ if [ $? -eq 127 ]; then
   cat <<EOF >/etc/profile.d/spark.sh
 export SPARK_HOME=$spark_home
 export PATH=\$PATH:\$SPARK_HOME/bin
-export \$SPARK_CHECKPOINT_DIR=$spark_checkpoint_dir
-export \$SPARK_LOGS_DIR=$spark_logs_dir
-export \$SPARK_WORK_DIR=$spark_work_dir
 EOF
 
 else
