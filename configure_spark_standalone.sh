@@ -59,6 +59,8 @@ spark_work_dir="/tmp/spark/work"
 read -e -p "Specify spark-cluster work directory: " -i "$spark_work_dir" spark_work_dir
 spark_checkpoint_dir="/tmp/spark/checkpoint"
 read -e -p "Specify spark-cluster work directory: " -i "$spark_checkpoint_dir" spark_checkpoint_dir
+spark_logs_dir="$SPARK_HOME/logs"
+read -e -p "Specify spark logs directory: " -i "$spark_logs_dir" spark_logs_dir
 
 spark_worker_instances="2"
 read -e -p "Specify spark-cluster worker instances per node: " -i "$spark_worker_instances" spark_worker_instances
@@ -134,20 +136,32 @@ fi
 if [ ! -d $spark_checkpoint_dir ]; then
   mkdir -pv $spark_checkpoint_dir && chmod ugo+w $spark_checkpoint_dir
 fi
+
+# spark needs a logs directory
+if [ ! -d "$spark_logs_dir" ]; then
+  mkdir -pv "$spark_logs_dir" && chmod ugo+rw "$spark_logs_dir"
+fi
+
+echo "export \$SPARK_CHECKPOINT_DIR=$spark_checkpoint_dir" >> /etc/profile.d/spark.sh
+echo "export \$SPARK_WORK_DIR=$spark_work_dir" >> /etc/profile.d/spark.sh
+echo "export \$SPARK_DATA_DIR=$spark_data_dir" >> /etc/profile.d/spark.sh
+echo "export \$SPARK_LOGS_DIR=$spark_logs_dir" >> /etc/profile.d/spark.sh
+
 EOF
 
 # copy configs to all nodes in the cluster
-for each in $nodes; do
-  spark_installed=$(ssh $each 'if [ -d $SPARK_HOME ]; then echo "y"; fi')
+for node in $nodes; do
+  spark_installed=$(ssh $node 'if [ -d $SPARK_HOME ]; then echo "y"; fi')
   if [ "$spark_installed" != "y"]; then
-    echo -e "Spark doesn't seem to be installed on $each at $SPARK_HOME."
+    echo -e "Spark doesn't seem to be installed on $node at $SPARK_HOME."
   else
     spark_conf_dir=$SPARK_HOME/conf
-    scp -v conf/* $each:$spark_conf_dir
+    scp -v conf/* $node:$spark_conf_dir
     if [ $? -eq 0 ]; then
-      echo -e "Successfully copied configs to $each."
+      echo -e "Successfully copied configs to $node."
+      ssh $node '$SPARK_HOME/conf/create_spark_dirs.sh'
     else
-      echo -e "Something went wrong trying to copy configs to $each."
+      echo -e "Something went wrong trying to copy configs to $node."
     fi
   fi
 done
