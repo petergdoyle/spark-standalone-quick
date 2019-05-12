@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 . ./spark_common.sh
+cd $(dirname $0)
 
 define_cluster_nodes
 

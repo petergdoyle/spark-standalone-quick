@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+cd $(dirname $0)
 
 function define_cluster_nodes() {
   if [ -d conf/ ]; then

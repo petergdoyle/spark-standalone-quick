@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 . ./spark_common.sh
+cd $(dirname $0)
 
 java -version > /dev/null 2>&1
 if [ $? -eq 127 ]; then

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 . ./spark_common.sh
+cd $(dirname $0)
 
 if [[ $EUID -ne 0 ]]; then
    echo "This script must be run as root"
@@ -30,9 +31,13 @@ fi
 define_cluster_nodes
 
 master_node_ip=$(cat conf/spark-cluster.info | grep MASTER_NODE |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}')
+echo -e "master node ip:\n$master_node_ip"
 master_node_name=$(cat conf/spark-cluster.info |grep MASTER_NODE_NAME| cut -d "=" -f 2)
+echo -e "master node name:\n$master_node_name"
 workers=$(cat conf/spark-cluster.info | grep WORKER_NODE |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}')
+echo -e "workers:\n${workers[@]}"
 nodes=$(cat conf/spark-cluster.info |egrep -oh '[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}.[0-9]{1,3}'| sort -u)
+echo -e "nodes:\n${nodes[@]}"
 
 rm -frv conf/*
 
