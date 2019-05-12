@@ -53,6 +53,12 @@ function define_cluster_nodes() {
   cat conf/spark-cluster.info
 }
 
+function distribute_spark_cluster_info() {
+  if test ! -d conf/spark-cluster.info; then
+    echo "The file \"conf/spark-cluster.info\" does not exist. run define_cluster_nodes to create this file."
+  fi
+}
+
 function spark_start_master() {
     $SPARK_HOME/sbin/start-master.sh
 }
