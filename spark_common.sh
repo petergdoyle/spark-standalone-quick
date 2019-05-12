@@ -105,10 +105,12 @@ function spark_cleanup_runtime_local() {
 
   cmd="rm -frv $SPARK_HOME/logs/*"
   read -n 1 -s -r -p "About to delete contents under $SPARK_HOME/logs/ ! Press any key to continue"
+  echo ""
   eval "$cmd"
 
   cmd="rm -fvr /tmp/spark/*/*"
   read -n 1 -s -r -p "About to delete contents under /tmp/spark/*/* ! Press any key to continue"
+  echo ""
   eval "$cmd"
 
 }
